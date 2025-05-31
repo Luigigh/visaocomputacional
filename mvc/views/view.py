@@ -11,7 +11,16 @@ import matplotlib
 matplotlib.use('TkAgg')
 
 class View:
+    """
+    Classe responsável pela interface gráfica do sistema de análise de postura.
+    Organiza os frames, menus, temas e interação com o usuário.
+    """
     def __init__(self, root, controller):
+        """
+        Inicializa a interface, configura estilos, temas e cria os frames principais.
+        :param root: Janela principal Tkinter.
+        :param controller: Instância do Controller.
+        """
         self.window = root
         self.controller = controller
         self.window.geometry("1600x900")
@@ -19,6 +28,11 @@ class View:
 
         # Configuração de estilos
         self.style = ttk.Style()
+        
+        # Adiciona fonte personalizada
+        self.fonte_titulo = ('Helvetica', 16, 'bold')
+        self.fonte_normal = ('Helvetica', 10)
+        self.fonte_pequena = ('Helvetica', 8)
 
         # Configuração de temas
         self.temas = {
@@ -28,7 +42,10 @@ class View:
                 'accent': '#007BFF',
                 'success': '#28A745',
                 'warning': '#FFC107',
-                'error': '#DC3545'
+                'error': '#DC3545',
+                'secondary': '#6C757D',
+                'light': '#F8F9FA',
+                'dark': '#343A40'
             },
             'Escuro': {
                 'bg': '#2B2B2B',
@@ -36,7 +53,10 @@ class View:
                 'accent': '#0D6EFD',
                 'success': '#198754',
                 'warning': '#FFC107',
-                'error': '#DC3545'
+                'error': '#DC3545',
+                'secondary': '#6C757D',
+                'light': '#F8F9FA',
+                'dark': '#343A40'
             },
             'Azul': {
                 'bg': '#E3F2FD',
@@ -44,7 +64,10 @@ class View:
                 'accent': '#1976D2',
                 'success': '#2E7D32',
                 'warning': '#F57F17',
-                'error': '#C62828'
+                'error': '#C62828',
+                'secondary': '#546E7A',
+                'light': '#ECEFF1',
+                'dark': '#263238'
             }
         }
         self.tema_atual = 'Claro'
@@ -205,17 +228,29 @@ class View:
         self.camera_frame = ttk.LabelFrame(self.grid_principal, text="Câmera")
         self.camera_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
         
-        # Área para exibir o vídeo
-        self.video_label = ttk.Label(self.camera_frame)
-        self.video_label.pack(padx=10, pady=10)
+        # Título com fonte personalizada
+        titulo = ttk.Label(self.camera_frame, text="Visualização da Câmera",
+                          font=self.fonte_titulo)
+        titulo.pack(pady=10)
+        
+        # Área para exibir o vídeo com borda
+        self.video_frame = ttk.Frame(self.camera_frame, style='Video.TFrame')
+        self.video_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        
+        self.video_label = ttk.Label(self.video_frame)
+        self.video_label.pack(padx=2, pady=2)
 
-        # Frame de status
+        # Frame de status com ícone
         self.status_frame = ttk.Frame(self.camera_frame)
         self.status_frame.pack(fill="x", padx=10, pady=5)
         
+        self.status_icon = ttk.Label(self.status_frame, text="●",
+                                    font=('Helvetica', 12))
+        self.status_icon.pack(side="left", padx=5)
+        
         self.status_label = ttk.Label(self.status_frame,
                                     text="Sistema pronto",
-                                    style='TLabel')
+                                    font=self.fonte_normal)
         self.status_label.pack(side="left")
 
     def _criar_frame_configuracoes(self):
@@ -236,43 +271,53 @@ class View:
         self.controles_frame = ttk.LabelFrame(self.config_frame, text="Controles de Câmera")
         self.controles_frame.pack(fill="x", padx=5, pady=5)
 
-        # Resolução
-        ttk.Label(self.controles_frame, text="Resolução:").grid(row=0, column=0, padx=5, pady=5)
+        # Grid para controles
+        for i in range(4):
+            self.controles_frame.columnconfigure(i, weight=1)
+
+        # Resolução com ícone
+        ttk.Label(self.controles_frame, text="📐 Resolução:",
+                 font=self.fonte_normal).grid(row=0, column=0, padx=5, pady=5)
         self.resolucao_var = tk.StringVar(value="1280x720")
         self.resolucao_combo = ttk.Combobox(self.controles_frame, 
                                           textvariable=self.resolucao_var,
-                                          values=["1280x720", "1920x1080", "800x600"])
+                                          values=["1280x720", "1920x1080", "800x600"],
+                                          font=self.fonte_normal)
         self.resolucao_combo.grid(row=0, column=1, padx=5, pady=5)
         self.resolucao_combo.bind('<<ComboboxSelected>>', self._on_resolucao_change)
 
-        # FPS
-        ttk.Label(self.controles_frame, text="FPS:").grid(row=0, column=2, padx=5, pady=5)
+        # FPS com ícone
+        ttk.Label(self.controles_frame, text="⚡ FPS:",
+                 font=self.fonte_normal).grid(row=0, column=2, padx=5, pady=5)
         self.fps_var = tk.StringVar(value="30")
         self.fps_combo = ttk.Combobox(self.controles_frame,
                                     textvariable=self.fps_var,
-                                    values=["15", "30", "60"])
+                                    values=["15", "30", "60"],
+                                    font=self.fonte_normal)
         self.fps_combo.grid(row=0, column=3, padx=5, pady=5)
         self.fps_combo.bind('<<ComboboxSelected>>', self._on_fps_change)
 
-        # Brilho
-        ttk.Label(self.controles_frame, text="Brilho:").grid(row=1, column=0, padx=5, pady=5)
+        # Brilho com slider
+        ttk.Label(self.controles_frame, text="☀️ Brilho:",
+                 font=self.fonte_normal).grid(row=1, column=0, padx=5, pady=5)
         self.brightness_scale = ttk.Scale(self.controles_frame,
-                                        from_=-100,
-                                        to=100,
+                                        from_=0, to=100,
                                         orient="horizontal",
                                         command=self._on_brightness_change)
-        self.brightness_scale.set(0)
-        self.brightness_scale.grid(row=1, column=1, columnspan=3, sticky="ew", padx=5, pady=5)
+        self.brightness_scale.set(50)
+        self.brightness_scale.grid(row=1, column=1, columnspan=3,
+                                 padx=5, pady=5, sticky="ew")
 
-        # Contraste
-        ttk.Label(self.controles_frame, text="Contraste:").grid(row=2, column=0, padx=5, pady=5)
+        # Contraste com slider
+        ttk.Label(self.controles_frame, text="🎨 Contraste:",
+                 font=self.fonte_normal).grid(row=2, column=0, padx=5, pady=5)
         self.contrast_scale = ttk.Scale(self.controles_frame,
-                                      from_=0.0,
-                                      to=2.0,
+                                      from_=0, to=200,
                                       orient="horizontal",
                                       command=self._on_contrast_change)
-        self.contrast_scale.set(1.0)
-        self.contrast_scale.grid(row=2, column=1, columnspan=3, sticky="ew", padx=5, pady=5)
+        self.contrast_scale.set(100)
+        self.contrast_scale.grid(row=2, column=1, columnspan=3,
+                               padx=5, pady=5, sticky="ew")
 
     def _criar_frame_angulos(self):
         """Cria o frame para exibição dos ângulos"""
@@ -317,7 +362,7 @@ class View:
             self.sugestao_labels.append(label)
 
     def _criar_frame_estatisticas(self):
-        """Cria o frame para exibição de estatísticas"""
+        """Cria o frame de estatísticas com gráficos melhorados"""
         self.estatisticas_frame = ttk.LabelFrame(self.config_frame, text="Estatísticas")
         self.estatisticas_frame.pack(fill="x", padx=5, pady=5)
 
@@ -328,27 +373,35 @@ class View:
         # Labels para estatísticas do dia
         self.tempo_correto_label = ttk.Label(self.estatisticas_dia_frame,
                                            text="Tempo em postura correta: 0 min",
-                                           style='TLabel')
+                                           font=self.fonte_normal)
         self.tempo_correto_label.grid(row=0, column=0, padx=5, pady=2)
 
         self.tempo_incorreto_label = ttk.Label(self.estatisticas_dia_frame,
                                              text="Tempo em postura incorreta: 0 min",
-                                             style='TLabel')
+                                             font=self.fonte_normal)
         self.tempo_incorreto_label.grid(row=0, column=1, padx=5, pady=2)
 
         self.percentual_label = ttk.Label(self.estatisticas_dia_frame,
                                         text="Percentual correto: 0%",
-                                        style='TLabel')
+                                        font=self.fonte_normal)
         self.percentual_label.grid(row=0, column=2, padx=5, pady=2)
 
-        # Frame para o gráfico
-        self.grafico_frame = ttk.Frame(self.estatisticas_frame)
-        self.grafico_frame.pack(fill="x", padx=5, pady=5)
-
-        # Criar figura do matplotlib
-        self.fig, self.ax = plt.subplots(figsize=(6, 3))
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.grafico_frame)
-        self.canvas.get_tk_widget().pack(fill="x", expand=True)
+        # Cria figura do matplotlib com estilo moderno
+        self.fig = plt.Figure(figsize=(6, 4), dpi=100)
+        self.fig.patch.set_facecolor(self.temas[self.tema_atual]['bg'])
+        
+        # Adiciona subplot com estilo moderno
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_facecolor(self.temas[self.tema_atual]['light'])
+        
+        # Configura estilo do gráfico
+        self.ax.grid(True, linestyle='--', alpha=0.7)
+        self.ax.spines['top'].set_visible(False)
+        self.ax.spines['right'].set_visible(False)
+        
+        # Cria canvas
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.estatisticas_frame)
+        self.canvas.get_tk_widget().pack(fill="both", expand=True, padx=5, pady=5)
 
     def _criar_frame_exportacao(self):
         """Cria o frame para exportação de dados"""
@@ -394,22 +447,40 @@ class View:
         self.botao_parar.grid(row=0, column=1, padx=5, pady=5)
 
     def atualizar_video(self, photo):
-        """Atualiza o frame do vídeo na interface"""
+        """
+        Atualiza o frame do vídeo na interface.
+        """
         self.video_label.configure(image=photo)
         self.video_label.image = photo
 
     def atualizar_status(self, mensagem, tipo="info"):
-        """Atualiza a mensagem de status com cores diferentes"""
+        """
+        Atualiza o status do sistema na interface, exibindo mensagens e ícones.
+        """
         cores = {
-            "info": "white",
-            "success": "green",
-            "error": "red",
-            "warning": "orange"
+            "success": self.temas[self.tema_atual]['success'],
+            "warning": self.temas[self.tema_atual]['warning'],
+            "error": self.temas[self.tema_atual]['error'],
+            "info": self.temas[self.tema_atual]['accent']
         }
-        self.status_label.configure(text=mensagem, foreground=cores.get(tipo, "white"))
+        
+        icones = {
+            "success": "✓",
+            "warning": "⚠",
+            "error": "✕",
+            "info": "ℹ"
+        }
+        
+        self.status_icon.configure(
+            text=icones.get(tipo, "ℹ"),
+            foreground=cores.get(tipo, self.temas[self.tema_atual]['accent'])
+        )
+        self.status_label.configure(text=mensagem)
 
     def atualizar_angulos(self, angulos):
-        """Atualiza os labels com os ângulos atuais"""
+        """
+        Atualiza os labels dos ângulos corporais exibidos na interface.
+        """
         self.angulo_pescoco_label.configure(
             text=f"Ângulo do Pescoço: {angulos['pescoco']:.1f}°"
         )
@@ -418,7 +489,9 @@ class View:
         )
 
     def ativar_alertas(self, tipo_erro, sugestoes):
-        """Ativa os alertas visuais e sonoros"""
+        """
+        Ativa alertas visuais e sonoros na interface.
+        """
         if not self.alerta_ativo:
             self.alerta_ativo = True
             
@@ -447,37 +520,51 @@ class View:
             self.alerta_thread.start()
 
     def desativar_alertas(self):
-        """Desativa os alertas visuais e sonoros"""
+        """
+        Desativa os alertas visuais e sonoros.
+        """
         self.alerta_ativo = False
         self.alerta_label.configure(text="")
         for label in self.sugestao_labels:
             label.configure(text="")
 
     def _tocar_alerta_sonoro(self):
-        """Toca o alerta sonoro em loop enquanto o alerta estiver ativo"""
+        """
+        Toca o alerta sonoro enquanto o alerta estiver ativo.
+        """
         while self.alerta_ativo:
             winsound.Beep(1000, 500)  # Frequência 1000Hz, duração 500ms
             time.sleep(2)  # Espera 2 segundos entre os beeps
 
     def _on_resolucao_change(self, event):
-        """Callback para mudança de resolução"""
+        """
+        Callback para mudança de resolução da câmera.
+        """
         res = self.resolucao_var.get().split('x')
         self.controller.atualizar_configuracao_camera('resolution', (int(res[0]), int(res[1])))
 
     def _on_fps_change(self, event):
-        """Callback para mudança de FPS"""
+        """
+        Callback para mudança de FPS da câmera.
+        """
         self.controller.atualizar_configuracao_camera('fps', int(self.fps_var.get()))
 
     def _on_brightness_change(self, value):
-        """Callback para mudança de brilho"""
+        """
+        Callback para mudança de brilho da câmera.
+        """
         self.controller.atualizar_configuracao_camera('brightness', float(value))
 
     def _on_contrast_change(self, value):
-        """Callback para mudança de contraste"""
+        """
+        Callback para mudança de contraste da câmera.
+        """
         self.controller.atualizar_configuracao_camera('contrast', float(value))
 
     def _atualizar_estatisticas(self):
-        """Atualiza as estatísticas na interface"""
+        """
+        Atualiza as estatísticas do dia e o gráfico na interface.
+        """
         try:
             # Atualiza estatísticas do dia
             resumo = self.controller.model.get_resumo_diario()
@@ -500,38 +587,57 @@ class View:
             print(f"Erro ao atualizar estatísticas: {e}")
 
     def _atualizar_grafico(self):
-        """Atualiza o gráfico de estatísticas"""
+        """
+        Atualiza o gráfico de histórico de posturas.
+        """
         try:
             # Limpa o gráfico
             self.ax.clear()
-
-            # Busca dados das posturas incorretas
-            dados = self.controller.model.get_posturas_incorretas_por_tempo()
             
-            if dados:
-                # Prepara dados para o gráfico
-                tempos = [d[0] for d in dados]  # Horas:Minutos:Segundos
-                quantidades = [d[1] for d in dados]  # Quantidade de posturas incorretas
-
-                # Plota o gráfico
-                self.ax.plot(tempos, quantidades, 'r-', label='Posturas Incorretas')
-                self.ax.set_title('Posturas Incorretas por Tempo')
-                self.ax.set_xlabel('Tempo')
-                self.ax.set_ylabel('Quantidade de Posturas Incorretas')
-                self.ax.legend()
-                self.ax.grid(True)
-
-                # Formata o eixo x para melhor visualização
-                plt.xticks(rotation=45)
-                self.fig.tight_layout()
-
-            # Atualiza o canvas
+            # Obtém dados
+            estatisticas = self.controller.model.get_estatisticas(dias=7)
+            if not estatisticas:
+                return
+            
+            # Prepara dados
+            datas = [datetime.strptime(e['data'], '%Y-%m-%d').strftime('%d/%m') 
+                    for e in estatisticas]
+            corretos = [e['total_correto'] for e in estatisticas]
+            incorretos = [e['total_incorreto'] for e in estatisticas]
+            
+            # Plota dados
+            x = range(len(datas))
+            width = 0.35
+            
+            self.ax.bar([i - width/2 for i in x], corretos, width,
+                       label='Postura Correta',
+                       color=self.temas[self.tema_atual]['success'])
+            self.ax.bar([i + width/2 for i in x], incorretos, width,
+                       label='Postura Incorreta',
+                       color=self.temas[self.tema_atual]['warning'])
+            
+            # Configura eixos
+            self.ax.set_xticks(x)
+            self.ax.set_xticklabels(datas, rotation=45)
+            self.ax.set_ylabel('Minutos')
+            self.ax.set_title('Histórico de Posturas', pad=20)
+            
+            # Adiciona legenda
+            self.ax.legend(loc='upper right')
+            
+            # Ajusta layout
+            self.fig.tight_layout()
+            
+            # Atualiza canvas
             self.canvas.draw()
+            
         except Exception as e:
             print(f"Erro ao atualizar gráfico: {e}")
 
     def _exportar_csv(self):
-        """Exporta dados para CSV"""
+        """
+        Exporta os dados para CSV conforme o período selecionado.
+        """
         try:
             # Obtém datas selecionadas
             data_inicio = datetime.combine(self.data_inicial.get_date(), datetime.min.time())

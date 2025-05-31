@@ -5,12 +5,21 @@ import os
 from typing import List, Dict, Any, Tuple
 
 class Model:
+    """
+    Classe responsável pelo gerenciamento dos dados e interação com o banco SQLite.
+    Armazena registros de postura, estatísticas e exportação de dados.
+    """
     def __init__(self):
+        """
+        Inicializa o banco de dados e cria as tabelas necessárias.
+        """
         self.db_connection = sqlite3.connect('postura.db')
         self._criar_tabelas()
 
     def _criar_tabelas(self):
-        """Cria as tabelas necessárias no banco de dados"""
+        """
+        Cria as tabelas do banco de dados se não existirem.
+        """
         cursor = self.db_connection.cursor()
         
         # Remove tabelas existentes para recriar com a nova estrutura
@@ -43,7 +52,9 @@ class Model:
         self.db_connection.commit()
 
     def registrar_postura(self, tipo_postura: str, duracao: int, angulos: Dict[str, float]) -> bool:
-        """Registra uma postura no banco de dados"""
+        """
+        Registra um novo evento de postura no banco de dados.
+        """
         try:
             cursor = self.db_connection.cursor()
             cursor.execute('''
@@ -67,7 +78,9 @@ class Model:
             return False
 
     def _atualizar_estatisticas_diarias(self):
-        """Atualiza as estatísticas diárias"""
+        """
+        Atualiza as estatísticas diárias de postura correta/incorreta.
+        """
         try:
             cursor = self.db_connection.cursor()
             hoje = datetime.now().date()
@@ -100,7 +113,9 @@ class Model:
             print(f"Erro ao atualizar estatísticas: {e}")
 
     def get_estatisticas(self, dias: int = 7) -> List[Dict[str, Any]]:
-        """Retorna estatísticas dos últimos N dias"""
+        """
+        Retorna estatísticas dos últimos dias para geração de gráficos.
+        """
         try:
             cursor = self.db_connection.cursor()
             data_inicio = datetime.now() - timedelta(days=dias)
@@ -161,7 +176,9 @@ class Model:
             return []
 
     def exportar_dados(self, formato: str = 'excel', data_inicio: datetime = None, data_fim: datetime = None) -> bool:
-        """Exporta dados para Excel ou CSV"""
+        """
+        Exporta os dados do banco para CSV ou Excel no período selecionado.
+        """
         try:
             # Busca dados
             dados = self.get_historico(data_inicio, data_fim)
@@ -195,7 +212,9 @@ class Model:
             return False
 
     def get_resumo_diario(self) -> Dict[str, Any]:
-        """Retorna resumo das estatísticas do dia atual"""
+        """
+        Retorna um resumo das posturas do dia (minutos correto/incorreto, percentual).
+        """
         try:
             cursor = self.db_connection.cursor()
             hoje = datetime.now().date()
